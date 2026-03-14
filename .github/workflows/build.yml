@@ -13,6 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Pre-create .godot folder
+        run: |
+          mkdir -p .godot/imported
+          mkdir -p .godot/editor
+
       - name: Export Android APK
         uses: dulvui/godot-android-export@v4
         with:
