@@ -13,10 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Android APK
-        uses: dulvui/godot-android-export@v2.2.0
+      - name: Export Android APK
+        uses: dulvui/godot-android-export@v4
         with:
-          working-directory: .
           godot-version: 4.2.2
 
       - name: Upload APK
