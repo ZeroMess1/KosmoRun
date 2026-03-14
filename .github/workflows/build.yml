@@ -54,12 +54,15 @@ jobs:
           timeout 30 godot --headless --editor --quit 2>&1 || true
           sleep 3
 
-      - name: SHOW SETTINGS FILE (paste output here)
+      - name: Add Android settings to editor config
         run: |
-          echo "=== ALL FILES IN .config/godot ==="
-          find /home/runner/.config/godot -type f 2>/dev/null || echo "FOLDER EMPTY"
-          echo "=== CONTENT ==="
-          cat /home/runner/.config/godot/editor_settings-4.tres 2>/dev/null || echo "FILE NOT FOUND"
+          SETTINGS=$(find /home/runner/.config/godot -name "editor_settings*.tres" | head -1)
+          echo "export/android/android_sdk_path = \"/usr/local/lib/android/sdk\"" >> "$SETTINGS"
+          echo "export/android/debug_keystore = \"/home/runner/debug.keystore\"" >> "$SETTINGS"
+          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> "$SETTINGS"
+          echo "export/android/debug_keystore_pass = \"android\"" >> "$SETTINGS"
+          echo "=== last 5 lines of settings ==="
+          tail -5 "$SETTINGS"
 
       - name: Write export_presets.cfg
         run: |
