@@ -49,70 +49,39 @@ jobs:
             -storepass android -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Set up Godot Android editor settings
+      - name: Write Godot editor settings (no indentation!)
         run: |
           mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.tres << EOF
-          [gd_resource type="EditorSettings" format=3]
-          [resource]
-          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
-          export/android/debug_keystore = "$HOME/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
-          EOF
+          KEYSTORE_PATH="$HOME/debug.keystore"
+          SDK_PATH="$ANDROID_SDK_ROOT"
+          printf '[gd_resource type="EditorSettings" format=3]\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/debug_keystore = "%s"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\nexport/android/force_system_user = false\nexport/android/shutdown_adb_on_exit = true\n' "$SDK_PATH" "$KEYSTORE_PATH" > ~/.config/godot/editor_settings-4.tres
+          echo "--- Editor settings ---"
+          cat ~/.config/godot/editor_settings-4.tres
 
-      - name: Write export_presets.cfg
+      - name: Write export_presets.cfg (no indentation!)
         run: |
           mkdir -p build
-          cat > export_presets.cfg << EOF
-          [preset.0]
-
-          name="Android"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/CyberRunner.apk"
-          encrypt_pck=false
-          encrypt_directory=false
-
-          [preset.0.options]
-
-          custom_template/debug=""
-          custom_template/release=""
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=true
-          architectures/arm64-v8a=true
-          keystore/debug="$HOME/debug.keystore"
-          keystore/debug_user="androiddebugkey"
-          keystore/debug_password="android"
-          keystore/release=""
-          keystore/release_user=""
-          keystore/release_password=""
-          package/unique_name="com.cyberrunner.game"
-          package/name="Cyber Runner"
-          package/signed=true
-          package/app_category=0
-          screen/immersive_mode=true
-          screen/keep_screen_on=true
-          version/code=1
-          version/name="1.0"
-          EOF
+          KEYSTORE_PATH="$HOME/debug.keystore"
+          printf '[preset.0]\n\nname="Android"\nplatform="Android"\nrunnable=true\ndedicated_server=false\ncustom_features=""\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="build/CyberRunner.apk"\nencrypt_pck=false\nencrypt_directory=false\n\n[preset.0.options]\n\ncustom_template/debug=""\ncustom_template/release=""\ngradle_build/use_gradle_build=false\narchitectures/armeabi-v7a=true\narchitectures/arm64-v8a=true\nkeystore/debug="%s"\nkeystore/debug_user="androiddebugkey"\nkeystore/debug_password="android"\nkeystore/release=""\nkeystore/release_user=""\nkeystore/release_password=""\npackage/unique_name="com.cyberrunner.game"\npackage/name="Cyber Runner"\npackage/signed=true\npackage/app_category=0\nscreen/immersive_mode=true\nscreen/keep_screen_on=true\nversion/code=1\nversion/name="1.0"\n' "$KEYSTORE_PATH" > export_presets.cfg
+          echo "--- Export presets ---"
+          cat export_presets.cfg
 
       - name: Import project
         run: |
-          timeout 40 godot --headless --editor --quit 2>&1 || true
+          timeout 60 godot --headless --editor --quit 2>&1 || true
           sleep 5
+
+      - name: Check SDK and templates
+        run: |
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls $ANDROID_SDK_ROOT/ndk/ || echo "NDK not found"
+          ls ~/.local/share/godot/export_templates/4.2.2.stable/ | head -5
 
       - name: Export APK
         run: |
           godot --headless --export-debug "Android" build/CyberRunner.apk 2>&1
           echo "--- Files in build/ ---"
           ls -la build/ || echo "build/ not found"
-          find . -name "*.apk" 2>/dev/null || echo "No APK found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
