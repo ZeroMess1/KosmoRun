@@ -85,17 +85,34 @@ jobs:
           echo "version/code=1" >> export_presets.cfg
           echo "version/name=\"1.0\"" >> export_presets.cfg
 
-      - name: Import and export in one step
+      - name: Write editor settings BEFORE first launch
         run: |
           mkdir -p /home/runner/.config/godot
+          echo "[gd_resource type=\"EditorSettings\" format=3]" > /home/runner/.config/godot/editor_settings-4.tres
+          echo "" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "[resource]" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/android_sdk_path = \"/usr/local/lib/android/sdk\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore = \"/home/runner/debug.keystore\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_pass = \"android\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/java_sdk_path = \"$JAVA_HOME\"" >> /home/runner/.config/godot/editor_settings-4.tres
+
+      - name: Import project
+        run: |
           timeout 60 godot --headless --editor --quit 2>&1 || true
-          sleep 3
-          SETTINGS=$(find /home/runner/.config/godot -name "editor_settings*.tres" | head -1)
-          echo "export/android/android_sdk_path = \"/usr/local/lib/android/sdk\"" >> "$SETTINGS"
-          echo "export/android/debug_keystore = \"/home/runner/debug.keystore\"" >> "$SETTINGS"
-          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> "$SETTINGS"
-          echo "export/android/debug_keystore_pass = \"android\"" >> "$SETTINGS"
-          echo "export/android/java_sdk_path = \"$JAVA_HOME\"" >> "$SETTINGS"
+          sleep 2
+
+      - name: Restore Android settings (Godot overwrites on import)
+        run: |
+          echo "export/android/android_sdk_path = \"/usr/local/lib/android/sdk\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore = \"/home/runner/debug.keystore\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_pass = \"android\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/java_sdk_path = \"$JAVA_HOME\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          tail -6 /home/runner/.config/godot/editor_settings-4.tres
+
+      - name: Export APK
+        run: |
           godot --headless --export-debug "Android" build/CyberRunner.apk 2>&1
           ls -la build/
 
