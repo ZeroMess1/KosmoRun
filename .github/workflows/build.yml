@@ -48,38 +48,18 @@ jobs:
             -storepass android -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Find exact NDK path
+      - name: Write editor settings
         run: |
-          echo "=== NDK versions available ==="
-          ls $ANDROID_SDK_ROOT/ndk/
-          NDK_VERSION=$(ls $ANDROID_SDK_ROOT/ndk/ | head -1)
-          echo "Using NDK: $NDK_VERSION"
-          echo "NDK_PATH=$ANDROID_SDK_ROOT/ndk/$NDK_VERSION" >> $GITHUB_ENV
-
-      - name: Run Godot once to generate default settings
-        run: |
-          timeout 15 godot --headless --quit 2>&1 || true
-          sleep 2
-          echo "=== Settings files ==="
-          find ~/.config/godot -type f 2>/dev/null || echo "no config found"
-
-      - name: Overwrite editor settings with correct paths
-        run: |
-          SETTINGS_FILE=$(find ~/.config/godot -name "editor_settings*.tres" | head -1)
-          echo "Found settings: $SETTINGS_FILE"
-          if [ -z "$SETTINGS_FILE" ]; then
-            SETTINGS_FILE=~/.config/godot/editor_settings-4.tres
-          fi
-          echo "Writing to: $SETTINGS_FILE"
-          echo "[gd_resource type=\"EditorSettings\" format=3]" > "$SETTINGS_FILE"
-          echo "" >> "$SETTINGS_FILE"
-          echo "[resource]" >> "$SETTINGS_FILE"
-          echo "export/android/android_sdk_path = \"$ANDROID_SDK_ROOT\"" >> "$SETTINGS_FILE"
-          echo "export/android/debug_keystore = \"$HOME/debug.keystore\"" >> "$SETTINGS_FILE"
-          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> "$SETTINGS_FILE"
-          echo "export/android/debug_keystore_pass = \"android\"" >> "$SETTINGS_FILE"
-          echo "=== Settings written ==="
-          cat "$SETTINGS_FILE"
+          mkdir -p /home/runner/.config/godot
+          echo "[gd_resource type=\"EditorSettings\" format=3]" > /home/runner/.config/godot/editor_settings-4.tres
+          echo "" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "[resource]" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/android_sdk_path = \"$ANDROID_SDK_ROOT\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore = \"/home/runner/debug.keystore\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "export/android/debug_keystore_pass = \"android\"" >> /home/runner/.config/godot/editor_settings-4.tres
+          echo "=== editor_settings-4.tres ==="
+          cat /home/runner/.config/godot/editor_settings-4.tres
 
       - name: Write export_presets.cfg
         run: |
@@ -103,7 +83,7 @@ jobs:
           echo "gradle_build/use_gradle_build=false" >> export_presets.cfg
           echo "architectures/armeabi-v7a=true" >> export_presets.cfg
           echo "architectures/arm64-v8a=true" >> export_presets.cfg
-          echo "keystore/debug=\"$HOME/debug.keystore\"" >> export_presets.cfg
+          echo "keystore/debug=\"/home/runner/debug.keystore\"" >> export_presets.cfg
           echo "keystore/debug_user=\"androiddebugkey\"" >> export_presets.cfg
           echo "keystore/debug_password=\"android\"" >> export_presets.cfg
           echo "keystore/release=\"\"" >> export_presets.cfg
@@ -117,6 +97,8 @@ jobs:
           echo "screen/keep_screen_on=true" >> export_presets.cfg
           echo "version/code=1" >> export_presets.cfg
           echo "version/name=\"1.0\"" >> export_presets.cfg
+          echo "=== export_presets.cfg ==="
+          cat export_presets.cfg
 
       - name: Import project assets
         run: |
