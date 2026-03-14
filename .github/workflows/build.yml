@@ -13,6 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v \
+            -keystore /home/runner/debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Export Godot Android APK
         uses: firebelley/godot-export@v5.2.1
         with:
@@ -21,10 +30,14 @@ jobs:
           relative_project_path: "./"
           archive_output: false
           export_debug: true
+          android_sign_debug: true
+          android_keystore_debug_path: "/home/runner/debug.keystore"
+          android_keystore_debug_user: "androiddebugkey"
+          android_keystore_debug_password: "android"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CyberRunner-APK
-          path: /home/runner/.local/share/godot/builds/android/
+          path: /home/runner/.local/share/godot/builds/Android/
           retention-days: 30
